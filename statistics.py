@@ -27,7 +27,7 @@ class Statistics(object):
         symbols = list(self.positions.keys())
         self.equity = pd.concat([self.positions[s].get_balance_log()['nav'] for s in symbols], keys=symbols, axis=1).sum(axis=1)
         self.balance_log = pd.concat([self.positions[s].get_balance_log() for s in symbols], keys=symbols, axis=1)
-        self.trade_profit = pd.concat([self.positions[s].get_trade_profit() for s in symbols], keys=symbols, sort=False)
+        self.trade_profit = pd.concat([self.positions[s].get_trade_profit() for s in symbols], keys=symbols)
         self.trade_profit.reset_index(inplace=True)
         self.trade_profit = self.trade_profit.set_index('timestamp').sort_index()
 
