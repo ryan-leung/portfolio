@@ -16,16 +16,17 @@ import numpy as np
 
 
 class Statistics(object):
-    def __init__(self, config, positions):
+    def __init__(self, config, positions, fixed_cash=0):
         self.config = config
         self.positions = positions
         self.balance_log = None
         self.equity = None
         self.trade_profit = None
+        self.fixed_cash = fixed_cash
 
     def calculate(self):
         symbols = list(self.positions.keys())
-        self.equity = pd.concat([self.positions[s].get_balance_log()['nav'] for s in symbols], keys=symbols, axis=1).sum(axis=1)
+        self.equity = pd.concat([self.positions[s].get_balance_log()['nav'] for s in symbols], keys=symbols, axis=1).sum(axis=1) + self.fixed_cash
         self.balance_log = pd.concat([self.positions[s].get_balance_log() for s in symbols], keys=symbols, axis=1)
         self.trade_profit = pd.concat([self.positions[s].get_trade_profit() for s in symbols], keys=symbols)
         self.trade_profit.reset_index(inplace=True)
@@ -61,20 +62,20 @@ class Statistics(object):
         long_trades = self.get_long_trades()
         short_trades = self.get_short_trades()
         def cal_trades(trades):
-            winning_mask = trades['realized_profit_pct']>0
-            lossing_mask = trades['realized_profit_pct']<=0
+            winning_mask = trades['realized_pnl']>0
+            lossing_mask = trades['realized_pnl']<=0
             return OrderedDict([
                 ["Total Trades", len(trades)],
-                ["Avg. Profit/Loss", trades['realized_profit'].mean()],
-                ["Avg. Profit/Loss %", trades['realized_profit_pct'].mean()],
+                ["Avg. Profit/Loss", trades['realized_gross_profit'].mean()],
+                ["Avg. Profit/Loss %", trades['realized_pnl'].mean()],
                 ["Winning Trades", winning_mask.sum()],
                 ["Winning Trades %", winning_mask.sum()/len(trades)*100],
-                ["Winning Trades Avg. Profit", trades[winning_mask]['realized_profit'].mean()],
-                ["Winning Trades Avg. Profit %", trades[winning_mask]['realized_profit_pct'].mean()],
+                ["Winning Trades Avg. Profit", trades[winning_mask]['realized_gross_profit'].mean()],
+                ["Winning Trades Avg. Profit %", trades[winning_mask]['realized_pnl'].mean()],
                 ["Lossing Trades", lossing_mask.sum()],
                 ["Lossing Trades %", lossing_mask.sum()/len(trades)*100],
-                ["Lossing Trades Avg. Profit", trades[lossing_mask]['realized_profit'].mean()],
-                ["Lossing Trades Avg. Profit %", trades[lossing_mask]['realized_profit_pct'].mean()],
+                ["Lossing Trades Avg. Profit", trades[lossing_mask]['realized_gross_profit'].mean()],
+                ["Lossing Trades Avg. Profit %", trades[lossing_mask]['realized_pnl'].mean()],
             ])
         results = [
             cal_trades(self.trade_profit),
