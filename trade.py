@@ -81,15 +81,15 @@ class Inventory(BaseModel):
             inventory_amount = abs(self.get_amount())
             avg_price = self.get_price()
             if self.islong:
-                realized_profit_pct = (price - avg_price) / avg_price * 100
+                realized_pnl = (price - avg_price) / avg_price
             else:
-                realized_profit_pct = (avg_price - price) / avg_price * 100
-            realized_profit_pt = amount * realized_profit_pct / 100
+                realized_pnl = (avg_price - price) / avg_price
+            realized_profit_pt = amount * realized_pnl
             if math.isclose(inventory_amount, amount):
                 self.inventory = []
             else:
                 self.inventory[0] = (inventory_amount - amount, avg_price)
-            return (realized_profit_pt, realized_profit_pct, avg_price, amount * price)
+            return (realized_profit_pt, realized_pnl, avg_price, amount * price)
 
     def long(self, amount:float, price:float):
         assert self.islong
@@ -211,8 +211,8 @@ class Position(BaseModel):
 
     def close(self, amount:float, price:float, timestamp:datetime.datetime=None, notes:str=""):
         amount = abs(amount)
-        realized_profit_pt, realized_profit_pct, avg_price, cash_changed = self.inv.close(abs(amount), price)
-        realized_profit = realized_profit_pt * self.base_rate * price
+        realized_profit_pt, realized_pnl, avg_price, cash_changed = self.inv.close(abs(amount), price)
+        realized_gross_profit = realized_profit_pt * self.base_rate * price
         fee_to_pay = self.commision.calculate(price, amount)
         cash_changed = abs(cash_changed)
         # Updates records
@@ -230,15 +230,15 @@ class Position(BaseModel):
             'amount':abs(amount),
             'exit_price':price,
             'enter_price':avg_price,
-            'realized_profit':realized_profit,
+            'realized_gross_profit':realized_gross_profit,
             'realized_profit_pt':realized_profit_pt,
-            'realized_profit_pct':realized_profit_pct,
+            'realized_pnl':realized_pnl,
             'trade':'LONG'})
 
     def cover(self, amount:float, price:float, timestamp:datetime.datetime=None, notes:str=""):
         amount = abs(amount)
-        realized_profit_pt, realized_profit_pct, avg_price, cash_changed = self.inv.cover(abs(amount), price)
-        realized_profit = realized_profit_pt * self.base_rate * price
+        realized_profit_pt, realized_pnl, avg_price, cash_changed = self.inv.cover(abs(amount), price)
+        realized_gross_profit = realized_profit_pt * self.base_rate * price
         fee_to_pay = self.commision.calculate(price, amount)
         cash_changed = -1 * abs(cash_changed)
         # Updates records
@@ -256,9 +256,9 @@ class Position(BaseModel):
             'amount':-abs(amount),
             'exit_price':price,
             'enter_price':avg_price,
-            'realized_profit':realized_profit,
+            'realized_gross_profit':realized_gross_profit,
             'realized_profit_pt':realized_profit_pt,
-            'realized_profit_pct':realized_profit_pct,
+            'realized_pnl':realized_pnl,
             'trade':'SHORT'})
 
     def update_base_rate(self, rate):
