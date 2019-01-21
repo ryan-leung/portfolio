@@ -174,7 +174,6 @@ class Position(BaseModel):
         if self.inv.get_amount() == 0:
             self.inv.go_long()
         amount = abs(amount)
-        assert self.enough_cash(amount*price)
         cash_changed = self.inv.long(abs(amount), price)
         fee_to_pay = self.commision.calculate(price, amount)
         # Updates records
@@ -193,7 +192,6 @@ class Position(BaseModel):
         if self.inv.get_amount() == 0:
             self.inv.go_short()
         amount = abs(amount)
-        assert self.enough_cash(amount*price)
         cash_changed = self.inv.short(abs(amount), price)
         cash_changed = abs(cash_changed)
         fee_to_pay = self.commision.calculate(price, amount)
@@ -210,7 +208,6 @@ class Position(BaseModel):
 
     def close(self, amount:float, price:float, timestamp:datetime.datetime=None, notes:str=""):
         amount = abs(amount)
-        assert self.enough_amount(amount)
         realized_profit_pt, realized_profit_pct, avg_price, cash_changed = self.inv.close(abs(amount), price)
         realized_profit = realized_profit_pt * self.base_rate * price
         fee_to_pay = self.commision.calculate(price, amount)
@@ -237,7 +234,6 @@ class Position(BaseModel):
 
     def cover(self, amount:float, price:float, timestamp:datetime.datetime=None, notes:str=""):
         amount = abs(amount)
-        assert self.enough_amount(amount)
         realized_profit_pt, realized_profit_pct, avg_price, cash_changed = self.inv.cover(abs(amount), price)
         realized_profit = realized_profit_pt * self.base_rate * price
         fee_to_pay = self.commision.calculate(price, amount)

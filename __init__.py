@@ -5,4 +5,4 @@ import matplotlib.pyplot as plt
 
 from .trade import *
 from .statistics import *
-from .positions import *
+#from .positions import *
