@@ -132,7 +132,7 @@ class Position(BaseModel):
     fee: float = 0
     leverage: float = 1
     inv: Inventory = Inventory()
-    commision: Commission = TradePercentage(0.000)
+    commision: Commission = TradePercentage(0.001)
     trade_log: List = []
     trade_profit: List = []
     balance_log: List = []
@@ -167,8 +167,11 @@ class Position(BaseModel):
     def get_amount(self):
         return self.inv.get_amount()
 
-    def get_nav(self, price):
+    def get_gav(self, price):
         return Position.cal_nav(self.fund, self.get_amount(), price)
+
+    def get_nav(self, price):
+        return self.get_gav(price) - self.fee
 
     def long(self, amount:float, price:float, timestamp:datetime.datetime=None, notes:str=""):
         if self.inv.get_amount() == 0:
@@ -349,7 +352,8 @@ class Position(BaseModel):
         summary = self.summary()
         summary.update({'timestamp':timestamp})
         summary.update({'price':price})
-        summary.update({'nav': Position.cal_nav(summary['fund'], summary['amount'], price)})
+        summary.update({'gav': self.get_gav(price)})
+        summary.update({'nav': self.get_nav(price)})
         summary.update({'exposure': Position.cal_exposure(summary['fund'], summary['amount'], price)})
         self.balance_log.append(summary)
         self.timestamp_log.append(timestamp)
