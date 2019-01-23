@@ -212,8 +212,9 @@ class Position(BaseModel):
     def close(self, amount:float, price:float, timestamp:datetime.datetime=None, notes:str=""):
         amount = abs(amount)
         realized_profit_pt, realized_pnl, avg_price, cash_changed = self.inv.close(abs(amount), price)
-        realized_gross_profit = realized_profit_pt * self.base_rate * price
+        realized_gross_profit = realized_profit_pt * self.base_rate * avg_price
         fee_to_pay = self.commision.calculate(price, amount)
+        total_fee = fee_to_pay + self.commision.calculate(avg_price, amount)
         cash_changed = abs(cash_changed)
         # Updates records
         self.fund += cash_changed
@@ -233,13 +234,15 @@ class Position(BaseModel):
             'realized_gross_profit':realized_gross_profit,
             'realized_profit_pt':realized_profit_pt,
             'realized_pnl':realized_pnl,
+            'total_fee': total_fee,
             'trade':'LONG'})
 
     def cover(self, amount:float, price:float, timestamp:datetime.datetime=None, notes:str=""):
         amount = abs(amount)
         realized_profit_pt, realized_pnl, avg_price, cash_changed = self.inv.cover(abs(amount), price)
-        realized_gross_profit = realized_profit_pt * self.base_rate * price
+        realized_gross_profit = realized_profit_pt * self.base_rate * avg_price
         fee_to_pay = self.commision.calculate(price, amount)
+        total_fee = fee_to_pay + self.commision.calculate(avg_price, amount)
         cash_changed = -1 * abs(cash_changed)
         # Updates records
         self.fund += cash_changed
@@ -259,6 +262,7 @@ class Position(BaseModel):
             'realized_gross_profit':realized_gross_profit,
             'realized_profit_pt':realized_profit_pt,
             'realized_pnl':realized_pnl,
+            'total_fee': total_fee,
             'trade':'SHORT'})
 
     def update_base_rate(self, rate):
