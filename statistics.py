@@ -62,15 +62,14 @@ class Statistics(object):
             return pd.DataFrame([results], columns=results.keys()).T
 
     def monthly_return(self):
-        df = copy(self.equity)
-        df.index = pd.to_datetime(df.index)
+        df = copy(self.equity.to_frame(name='returns'))
         df['year'] = df.index.year
         df['month'] = df.index.month
         end_date_of_month = df.asfreq('BM').set_index(['year', 'month'])
         first_date_of_month = df.asfreq('BMS').set_index(['year', 'month'])
         pct = end_date_of_month.pct_change()
-        if pd.isna(pct[0][0]):
-            pct[0][0] = end_date_of_month[0][0] / first_date_of_month[0][0] - 1
+        if pd.isna(pct['returns'][0]):
+            pct['returns'][0] = end_date_of_month['returns'][0] / first_date_of_month['returns'][0] - 1
         return pct
 
     def trade_summary(self, raw=False):
