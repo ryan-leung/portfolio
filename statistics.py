@@ -27,6 +27,7 @@ class Statistics(object):
     def calculate(self):
         symbols = list(self.positions.keys())
         self.equity = pd.concat([self.positions[s].get_balance_log()['nav'] for s in symbols], keys=symbols, axis=1).sum(axis=1) + self.fixed_cash
+        self.gav = pd.concat([self.positions[s].get_balance_log()['gav'] for s in symbols], keys=symbols, axis=1).sum(axis=1) + self.fixed_cash
         self.balance_log = pd.concat([self.positions[s].get_balance_log() for s in symbols], keys=symbols, axis=1)
         self.trade_profit = pd.concat([self.positions[s].get_trade_profit() for s in symbols], keys=symbols)
         self.trade_profit.reset_index(inplace=True)
@@ -45,6 +46,8 @@ class Statistics(object):
             ["Trade Start", self.config.start_time],
             ["Trade End", self.config.end_time],
             ["Trade Days", self.config.end_time - self.config.start_time],
+            ["Gross Profit", self.gav[-1] - self.config.fund],
+            ["Gross Profit %", (self.gav[-1] - self.config.fund) / self.config.fund * 100],
             ["Net Profit", self.equity[-1] - self.config.fund],
             ["Net Profit %", (self.equity[-1] - self.config.fund) / self.config.fund * 100],
             ["Maximum Drawdown %", max_drawdown(self.equity) * 100],
@@ -56,6 +59,18 @@ class Statistics(object):
             return results
         else:
             return pd.DataFrame([results], columns=results.keys()).T
+
+    def monthly_return(self):
+        df = self.equity
+        df.index = pd.to_datetime(df.index)
+        df['year'] = df.index.year
+        df['month'] = df.index.month
+        end_date_of_month = df.asfreq('BM').set_index(['year', 'month'])
+        first_date_of_month = df.asfreq('BMS').set_index(['year', 'month'])
+        pct = end_date_of_month.pct_change()
+        if pd.isna(pct[0][0]):
+            pct[0][0] = end_date_of_month[0][0] / first_date_of_month[0][0] - 1
+        return pct
 
     def trade_summary(self, raw=False):
         columns = ['All', 'Long', 'Short']
