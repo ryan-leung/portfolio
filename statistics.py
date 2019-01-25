@@ -1,6 +1,7 @@
 from collections import OrderedDict
 import pandas as pd
 import numpy as np
+from copy import copy
 
 ########################################################################
 #### Statistics
@@ -61,7 +62,7 @@ class Statistics(object):
             return pd.DataFrame([results], columns=results.keys()).T
 
     def monthly_return(self):
-        df = self.equity
+        df = copy(self.equity)
         df.index = pd.to_datetime(df.index)
         df['year'] = df.index.year
         df['month'] = df.index.month
